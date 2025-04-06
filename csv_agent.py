@@ -207,7 +207,6 @@ Answer the following query about the dataset:
 {query}
 """
 
-        print(prompt)
         # Add this query and response to chat history
         self.chat_history.append({"role": "user", "content": query})
         
