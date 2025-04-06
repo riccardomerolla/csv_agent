@@ -137,14 +137,48 @@ class CSVAgent:
         prompt = f"""
 You are an agent that writes and executes python code
 You have access to a Python, which you can use to execute the python code.
-You must write the python code code assuming that the dataframe (stored as df) has already been read.
+You must write the python code assuming that the dataframe (stored as df) has already been read.
+You must write the python code that print each steps like a notebook.
+You must write the code in a way that it can be executed in a Python REPL.
+You must write the code assuming that the df variable is a pandas dataframe and is already defined.
 If you get an error, debug your code and try again.
 You might know the answer without running any code, but you should still run the code to get the answer.
 If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
 Do not create example dataframes
-Answer the following query about the dataset:
 
-{query}
+    TOOLS:
+
+    ------
+
+    You have access to the following tools:
+
+    pandas, matplotlib, seaborn
+
+    To use a tool, please use the following format:
+
+    ```
+
+    Thought: Do I need to use a tool? Yes
+
+    Action: the action to take, should be one of [pandas, matplotlib, seaborn]
+
+    Action Input: the input to the action
+
+    Observation: the result of the action
+
+    ```
+
+    When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+
+    ```
+
+    Thought: Do I need to use a tool? No
+
+    Final Answer: [your response here]
+
+    ```
+
+    Begin!
 
 Here is information about the dataset:
 - Name: {df_info['name']}
@@ -154,11 +188,9 @@ Here is information about the dataset:
 Here are details about each column:
 {json.dumps([{c['name']: c} for c in df_info['columns']], indent=2)}
 
-Sample data (first 5 rows):
-{json.dumps(df_info['sample_data'], indent=2)}
+Answer the following query about the dataset:
 
-If the user asks for Python code, provide executable code using pandas. If they want a visualization, provide matplotlib/seaborn code.
-If you need to execute code to answer this question precisely, say "I need to execute code to answer this accurately" and then provide the code. 
+{query}
 """
         # Add this query and response to chat history
         self.chat_history.append({"role": "user", "content": query})
@@ -332,7 +364,7 @@ If you need to execute code to answer this question precisely, say "I need to ex
             "prompt": prompt,
             "stream": False,
             "options": {
-                "temperature": 0.7,
+                "temperature": 0.0,
                 "max_tokens": self.max_tokens
             }
         }
