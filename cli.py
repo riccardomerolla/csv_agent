@@ -176,14 +176,29 @@ class CSVAgentShell(cmd.Cmd):
         """Ask for confirmation"""
         response = input(f"{prompt} (y/n) ")
         return response.lower() in ('y', 'yes')
+    
+    def do_interactive(self, arg):
+        """Start an interactive session with the CSV Agent
+        
+        This enters a REPL mode where you can have a continuous conversation with the agent.
+        The agent will maintain context between queries and execute code automatically.
+        Type /help within the session for available commands.
+        """
+        print("Starting interactive session. Type 'exit' to end.")
+        self.agent.start_interactive_session()
 
 def main():
     parser = argparse.ArgumentParser(description='CSV Agent CLI')
     parser.add_argument('--model', default='llama3', help='Ollama model name')
+    parser.add_argument('--interactive', '-i', action='store_true', help='Start in interactive mode')
     args = parser.parse_args()
     
     shell = CSVAgentShell(model_name=args.model)
-    shell.cmdloop()
+    
+    if args.interactive:
+        shell.do_interactive("")
+    else:
+        shell.cmdloop()
 
 if __name__ == '__main__':
     main()
