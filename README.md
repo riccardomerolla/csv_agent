@@ -9,6 +9,7 @@ A Python-based tool that enables AI-driven analysis of CSV data using local LLM 
 - Query data using natural language
 - Generate visualizations
 - Execute Python code for custom analysis
+- Robust interactive mode with improved terminal handling
 - Integration with OpenWebUI (optional)
 
 ## Requirements
@@ -21,7 +22,7 @@ A Python-based tool that enables AI-driven analysis of CSV data using local LLM 
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/csv-agent.git
+   git clone https://github.com/riccardomerolla/csv-agent.git
    cd csv-agent
    ```
 
@@ -49,6 +50,46 @@ python cli.py --model llama3
 python cli.py --model deepseek-r1:8b
 ```
 
+### Interactive Mode
+
+The interactive mode provides a robust REPL (Read-Eval-Print Loop) interface for analyzing your CSV files:
+
+```bash
+python cli.py --model deepseek-r1:8b --interactive
+```
+
+Interactive mode features:
+- Proper handling of terminal input including special characters
+- Robust exception handling to prevent session crashes
+- Enhanced command history with readline support
+- Input validation and cleaning
+
+Example interactive session:
+```
+Starting interactive session with CSV Agent. Type 'exit' to end the session.
+
+> /load data/sales.csv
+CSV file 'data/sales.csv' loaded successfully as 'sales'
+
+> /info
+Dataset: sales
+Rows: 5000, Columns: 8
+
+Columns:
+- date (object): 365 unique values, 0 missing
+- product_id (int64): 150 unique values, 0 missing
+- category (object): 5 unique values, 0 missing
+- price (float64): 120 unique values, 0 missing
+- quantity (int64): 15 unique values, 0 missing
+
+> What's the average sales by category?
+
+[Agent responds with analysis and executes code...]
+
+> /exit
+Ending interactive session.
+```
+
 Available commands:
 - `load <file_path> [dataset_name]` - Load a CSV file
 - `info [dataset_name]` - Show dataset information
@@ -57,6 +98,8 @@ Available commands:
 - `exec <code>` - Execute Python code on the current dataframe
 - `list` - List all loaded datasets
 - `switch <dataset_name>` - Switch to a different dataset
+- `clear` - Clear the conversation history
+- `help` - Display available commands
 - `exit` or `quit` - Exit the application
 
 Examples:
