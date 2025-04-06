@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Union, Any, Tuple
 import requests
 from python_repl import PythonREPL
 import readline  # Add readline for better terminal input handling
+from pymongo import MongoClient  # Add MongoDB client
 
 class CSVAgent:
     def __init__(self, model_name="llama3", ollama_host="http://localhost:11434", max_tokens=2000):
@@ -358,6 +359,42 @@ Answer the following query about the dataset:
         else:
             return {"error": "Failed to generate plot"}
     
+    def store_in_mongodb(self, collection_name: str, df_name: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Store the DataFrame in a MongoDB collection.
+        
+        Args:
+            collection_name: Name of the MongoDB collection
+            df_name: Name of the DataFrame to store
+            
+        Returns:
+            Dict with result information
+        """
+        df_name = df_name or self.current_df_name
+        if df_name not in self.dataframes:
+            return {"error": f"DataFrame '{df_name}' not found"}
+        
+        df = self.dataframes[df_name]
+        
+        try:
+            # Connect to MongoDB (assuming it's running locally)
+            client = MongoClient('mongodb://localhost:27017/')
+            db = client['csv_agent_db']  # Use a default database name
+            collection = db[collection_name]
+            
+            # Convert DataFrame to list of dictionaries and insert to MongoDB
+            records = df.to_dict(orient='records')
+            # If collection exists, replace its content; otherwise create it
+            collection.delete_many({})  # Clear the collection if it exists
+            result = collection.insert_many(records)
+            
+            return {
+                "success": True,
+                "message": f"Stored {len(result.inserted_ids)} records from '{df_name}' to MongoDB collection '{collection_name}'"
+            }
+        except Exception as e:
+            return {"error": f"Failed to store data in MongoDB: {e}"}
+    
     def _call_ollama(self, prompt: str) -> str:
         """
         Call the Ollama API.
@@ -495,7 +532,15 @@ Answer the following query about the dataset:
                 print("\nColumns:")
                 for col in info['columns']:
                     print(f"- {col['name']} ({col['dtype']}): {col['unique_values']} unique values, {col['missing_values']} missing")
-            
+                    
+        elif cmd == "store" and len(args) >= 1:
+            collection_name = args[0]
+            result = self.store_in_mongodb(collection_name)
+            if "error" in result:
+                print(result["error"])
+            else:
+                print(result["message"])
+        
         elif cmd == "list":
             if not self.dataframes:
                 print("No datasets loaded")
@@ -524,6 +569,7 @@ Answer the following query about the dataset:
             print("  /info [dataset_name] - Show dataset information")
             print("  /list - List all loaded datasets")
             print("  /switch <dataset_name> - Switch to a different dataset")
+            print("  /store <collection_name> - Store DataFrame in MongoDB collection")
             print("  /clear - Clear chat history")
             print("  /help - Show this help message")
             print("  /exit - Exit the session")

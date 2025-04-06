@@ -10,12 +10,14 @@ A Python-based tool that enables AI-driven analysis of CSV data using local LLM 
 - Generate visualizations
 - Execute Python code for custom analysis
 - Robust interactive mode with improved terminal handling
+- MongoDB integration for data storage
 - Integration with OpenWebUI (optional)
 
 ## Requirements
 
 - Python 3.8+
 - Ollama running locally (with models like llama3)
+- MongoDB (for data storage capabilities)
 - Optional: OpenWebUI for web interface
 
 ## Installation
@@ -34,6 +36,11 @@ A Python-based tool that enables AI-driven analysis of CSV data using local LLM 
 3. Make sure Ollama is running with your preferred model:
    ```bash
    ollama run llama3
+   ```
+
+4. Optional: Start MongoDB if you plan to use the storage capabilities:
+   ```bash
+   mongod --dbpath /path/to/data/directory
    ```
 
 ## Usage
@@ -98,6 +105,7 @@ Available commands:
 - `exec <code>` - Execute Python code on the current dataframe
 - `list` - List all loaded datasets
 - `switch <dataset_name>` - Switch to a different dataset
+- `store <collection_name>` - Store DataFrame in MongoDB collection
 - `clear` - Clear the conversation history
 - `help` - Display available commands
 - `exit` or `quit` - Exit the application
@@ -109,6 +117,7 @@ Examples:
 (csv_agent) ask What is the average age of customers by region?
 (csv_agent) viz histogram age
 (csv_agent) viz scatter age income
+(csv_agent) store customers
 ```
 
 ### OpenWebUI Integration
