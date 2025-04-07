@@ -395,6 +395,131 @@ Answer the following query about the dataset:
         except Exception as e:
             return {"error": f"Failed to store data in MongoDB: {e}"}
     
+    def filter_mongodb(self, query: str, collection_name: str) -> Dict[str, Any]:
+        """
+        Convert natural language to Python code that queries MongoDB and execute it.
+        
+        Args:
+            query: Natural language query
+            collection_name: Name of the MongoDB collection to query
+            
+        Returns:
+            Dict with query results or error
+        """
+        try:
+            # Connect to MongoDB to verify collection exists
+            client = MongoClient('mongodb://localhost:27017/')
+            db = client['csv_agent_db']
+            
+            # Check if collection exists
+            if collection_name not in db.list_collection_names():
+                return {"error": f"Collection '{collection_name}' not found in MongoDB"}
+            
+            collection = db[collection_name]
+            
+            # Get a sample document to understand the structure
+            sample_doc = collection.find_one()
+            if not sample_doc:
+                return {"error": f"Collection '{collection_name}' is empty"}
+                
+            # Convert ObjectId to string for display
+            if '_id' in sample_doc and hasattr(sample_doc['_id'], '__str__'):
+                sample_doc['_id'] = str(sample_doc['_id'])
+                
+            sample_fields = ", ".join(sample_doc.keys())
+            
+            # Convert natural language to Python code using LLM
+            prompt = f"""
+You are an agent that writes Python code to query MongoDB.
+Convert the following natural language query into executable Python code using pymongo.
+
+The database is already available as fixed value 'csv_agent_db'.
+The collection is already available as 'collection' variable.
+The code should return the query results in a variable called 'results'.
+Limit the results to 20 documents.
+Convert ObjectId fields to strings for better display without using lambda or map function.
+Just write the code without explanation.
+
+Sample document from the collection:
+{json.dumps(sample_doc, indent=2)}
+
+Natural language query: {query}
+
+```python
+# Your code here
+```
+"""
+            # Call Ollama API to get the Python code
+            response = self._call_ollama(prompt).strip()
+            
+            # Extract the code from the response
+            code_blocks = self._extract_code_blocks(response)
+            if not code_blocks:
+                # If no code blocks found, try to use the entire response as code
+                code_blocks = [response]
+            
+            # Add necessary imports and setup to the code
+            full_code = """
+from bson import ObjectId
+import json
+
+# MongoDB collection is provided as 'collection'
+try:
+"""
+            # Add the extracted code, indented for the try block
+            code_lines = code_blocks[0].strip().split('\n')
+            for line in code_lines:
+                full_code += f"    {line}\n"
+            
+            # Add code to format the results
+            full_code += """
+    # Convert ObjectId to string for JSON serialization
+    formatted_results = []
+    for doc in results:
+        if isinstance(doc, dict):
+            doc_copy = doc.copy()
+            if '_id' in doc_copy and hasattr(doc_copy['_id'], '__str__'):
+                doc_copy['_id'] = str(doc_copy['_id'])
+            formatted_results.append(doc_copy)
+    
+    # Set variables for result reporting
+    result_count = len(formatted_results)
+    _result = {
+        "count": result_count,
+        "results": formatted_results[:20]
+    }
+    print(f"Found {result_count} documents matching the query")
+except Exception as e:
+    print(f"Error executing MongoDB query: {str(e)}")
+    _result = {"error": str(e)}
+"""
+            
+            # Set up the REPL with the MongoDB connection
+            self.repl.set_variable('collection', collection)
+
+            # Execute the code using the REPL
+            execution_result = self.repl.execute(full_code)
+            
+            # Check for errors
+            if execution_result.get("error"):
+                return {"error": execution_result["error"]}
+            
+            # Get the _result variable from the REPL
+            query_result = self.repl.get_variable('_result')
+            
+            if isinstance(query_result, dict) and "error" in query_result:
+                return query_result
+            
+            return {
+                "success": True,
+                "output": execution_result.get("output", ""),
+                "results": query_result.get("results", []),
+                "count": query_result.get("count", 0)
+            }
+            
+        except Exception as e:
+            return {"error": f"Failed to execute MongoDB query: {e}"}
+    
     def _call_ollama(self, prompt: str) -> str:
         """
         Call the Ollama API.
@@ -541,6 +666,47 @@ Answer the following query about the dataset:
             else:
                 print(result["message"])
         
+        elif cmd == "filter" and len(args) >= 1:
+            # First argument is the collection name, rest is the query
+            if len(args) < 2:
+                print("Error: 'filter' command requires a collection name and a query")
+                print("Usage: /filter <collection_name> <natural language query>")
+                return
+                
+            collection_name = args[0]
+            query = " ".join(args[1:])
+            
+            print(f"Converting to MongoDB query: '{query}'")
+            result = self.filter_mongodb(query, collection_name)
+            
+            if "error" in result:
+                print(f"Error: {result['error']}")
+            else:
+                print(result.get("output", ""))
+                
+                # Display results in a formatted way
+                count = result.get("count", 0)
+                results = result.get("results", [])
+                
+                if count > 0:
+                    # Show only first 5 results if there are more
+                    display_count = min(5, count)
+                    
+                    for i, doc in enumerate(results[:display_count]):
+                        print(f"\n--- Document {i+1} ---")
+                        # Handle potential JSON serialization errors with fallback
+                        try:
+                            print(json.dumps(doc, indent=2))
+                        except (TypeError, ValueError):
+                            print("Document contains non-serializable values. Simplified view:")
+                            for key, value in doc.items():
+                                print(f"  {key}: {str(value)[:100]}")
+                    
+                    if count > display_count:
+                        print(f"\n... and {count - display_count} more documents")
+                else:
+                    print("No documents matched your query.")
+        
         elif cmd == "list":
             if not self.dataframes:
                 print("No datasets loaded")
@@ -570,6 +736,7 @@ Answer the following query about the dataset:
             print("  /list - List all loaded datasets")
             print("  /switch <dataset_name> - Switch to a different dataset")
             print("  /store <collection_name> - Store DataFrame in MongoDB collection")
+            print("  /filter <collection_name> <query> - Query MongoDB using natural language")
             print("  /clear - Clear chat history")
             print("  /help - Show this help message")
             print("  /exit - Exit the session")

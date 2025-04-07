@@ -10,7 +10,7 @@ A Python-based tool that enables AI-driven analysis of CSV data using local LLM 
 - Generate visualizations
 - Execute Python code for custom analysis
 - Robust interactive mode with improved terminal handling
-- MongoDB integration for data storage
+- MongoDB integration for data storage and natural language queries
 - Integration with OpenWebUI (optional)
 
 ## Requirements
@@ -106,6 +106,7 @@ Available commands:
 - `list` - List all loaded datasets
 - `switch <dataset_name>` - Switch to a different dataset
 - `store <collection_name>` - Store DataFrame in MongoDB collection
+- `filter <collection_name> <query>` - Query MongoDB using natural language
 - `clear` - Clear the conversation history
 - `help` - Display available commands
 - `exit` or `quit` - Exit the application
@@ -118,6 +119,7 @@ Examples:
 (csv_agent) viz histogram age
 (csv_agent) viz scatter age income
 (csv_agent) store customers
+(csv_agent) filter customers find all customers older than 30 in California
 ```
 
 ### OpenWebUI Integration
@@ -136,6 +138,7 @@ The CSV Agent combines:
 - Pandas for data processing
 - Ollama for LLM inference
 - Matplotlib and Seaborn for visualizations
+- MongoDB for data storage and retrieval
 - A conversational interface for data analysis
 
 When you ask a question, the agent:
@@ -144,6 +147,12 @@ When you ask a question, the agent:
 3. Processes the LLM's response
 4. Executes any code if necessary
 5. Returns results and/or visualizations
+
+For MongoDB queries, the agent:
+1. Takes your natural language query
+2. Converts it to a MongoDB query using the LLM
+3. Executes the query against your MongoDB collection
+4. Returns the matching documents
 
 ## Extending the Agent
 
