@@ -122,6 +122,79 @@ Examples:
 (csv_agent) filter customers find all customers older than 30 in California
 ```
 
+### MongoDB Integration and Natural Language Queries
+
+#### Storing Data in MongoDB
+
+Use the `store` command to persist your data in MongoDB for later retrieval:
+
+```
+(csv_agent) store customers
+```
+
+This will store the current dataframe in a MongoDB collection named "customers".
+
+#### Using the Filter Command
+
+The `filter` command allows you to query MongoDB collections using natural language instead of learning complex MongoDB query syntax.
+
+Syntax:
+```
+filter <collection_name> <natural language query>
+```
+
+##### How It Works
+
+When using the filter command:
+1. The natural language query is sent to the LLM
+2. The LLM translates your request into a proper MongoDB query
+3. The query is executed against your MongoDB collection
+4. Results are returned as a pandas DataFrame
+
+##### Examples
+
+Basic filtering:
+```
+(csv_agent) filter customers find all customers from New York
+```
+
+Compound conditions:
+```
+(csv_agent) filter customers find customers who spent more than $1000 and joined before 2022
+```
+
+Sorting and limiting:
+```
+(csv_agent) filter customers find the top 5 customers by purchase amount
+```
+
+Aggregate queries:
+```
+(csv_agent) filter sales give me monthly sales totals for each product category
+```
+
+Field selection:
+```
+(csv_agent) filter customers return only the name and email of customers who haven't made a purchase in 6 months
+```
+
+Advanced filtering:
+```
+(csv_agent) filter transactions find all transactions with unusual spending patterns where amount exceeds twice the customer's average
+```
+
+Comparison filters:
+```
+(csv_agent) filter products find all products with inventory below 10 units that have high demand (sold > 50 units last month)
+```
+
+#### Additional Filter Features
+
+- Results are automatically converted to pandas DataFrames for further analysis
+- The generated MongoDB queries are displayed to help you learn MongoDB syntax
+- You can modify the returned data with standard DataFrame operations
+- Error handling provides clear feedback if your query can't be processed
+
 ### OpenWebUI Integration
 
 Start the OpenWebUI integration server:
@@ -166,3 +239,4 @@ You can extend this agent by:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+`
