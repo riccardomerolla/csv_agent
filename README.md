@@ -35,7 +35,7 @@ A Python-based tool that enables AI-driven analysis of CSV data using local LLM 
 
 3. Make sure Ollama is running with your preferred model:
    ```bash
-   ollama run llama3
+   ollama run granite3.2
    ```
 
 4. Optional: Start MongoDB if you plan to use the storage capabilities:
@@ -50,7 +50,7 @@ A Python-based tool that enables AI-driven analysis of CSV data using local LLM 
 Start the command line interface:
 
 ```bash
-python cli.py --model llama3
+python cli.py --model granite3.2
 ```
 
 ```bash
@@ -62,7 +62,7 @@ python cli.py --model deepseek-r1:8b
 The interactive mode provides a robust REPL (Read-Eval-Print Loop) interface for analyzing your CSV files:
 
 ```bash
-python cli.py --model deepseek-r1:8b --interactive
+python cli.py --model granite3.2 --interactive
 ```
 
 Interactive mode features:

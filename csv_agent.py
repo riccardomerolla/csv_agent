@@ -434,6 +434,8 @@ You are an agent that writes Python code to query MongoDB.
 Convert the following natural language query into executable Python code using pymongo.
 
 The database is already available as fixed value 'csv_agent_db'.
+client = MongoClient('mongodb://localhost:27017/')
+db = client['csv_agent_db']
 The collection is already available as 'collection' variable.
 The code should return the query results in a variable called 'results'.
 Limit the results to 20 documents.
@@ -443,6 +445,8 @@ Just write the code without explanation.
 Sample document from the collection:
 {json.dumps(sample_doc, indent=2)}
 
+Document fields: {sample_fields}
+
 Natural language query: {query}
 
 ```python
@@ -451,7 +455,7 @@ Natural language query: {query}
 """
             # Call Ollama API to get the Python code
             response = self._call_ollama(prompt).strip()
-            
+
             # Extract the code from the response
             code_blocks = self._extract_code_blocks(response)
             if not code_blocks:
